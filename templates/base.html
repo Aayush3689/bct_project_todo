@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Todo{% endblock %} — Todo App</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #ffffff;
+            --surface: #f9f9f9;
+            --border: #e8e8e8;
+            --border-focus: #c0c0c0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b6b6b;
+            --text-muted: #a0a0a0;
+            --accent: #4f7ef8;
+            --accent-hover: #3a6ae0;
+            --accent-light: #eef2ff;
+            --danger: #e05252;
+            --danger-light: #fff0f0;
+            --success: #3a9e6e;
+            --success-light: #edfaf4;
+            --radius: 6px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        html, body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── Top Nav ── */
+        .topnav {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topnav-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .topnav .logo {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: -0.4px;
+            flex-shrink: 0;
+        }
+
+        .topnav .logo span { color: var(--accent); }
+
+        .topnav nav { display: flex; gap: 4px; align-items: center; }
+
+        .topnav nav a {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: var(--radius);
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .topnav nav a:hover { background: var(--surface); color: var(--text-primary); }
+        .topnav nav a.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+
+        .nav-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-name { font-size: 13px; color: var(--text-secondary); }
+
+        .avatar {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            display: block;
+        }
+
+        .avatar-placeholder {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 12px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn-logout {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: var(--danger-light);
+            text-decoration: none;
+        }
+
+        /* ── Page ── */
+        .page {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 36px 24px 60px;
+        }
+
+        .page-header { margin-bottom: 28px; }
+
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        .page-header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ── Flash ── */
+        .flash {
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 20px;
+            background: var(--success-light);
+            color: var(--success);
+            border: 1px solid #b7e8d2;
+        }
+
+        /* ── Add task bar ── */
+        .add-task-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .add-task-bar input[type="text"] {
+            flex: 1;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .add-task-bar input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79,126,248,0.12);
+        }
+
+        .add-task-bar input::placeholder { color: var(--text-muted); }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            border: 1px solid transparent;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; text-decoration: none; }
+
+        .btn-ghost { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+        .btn-ghost:hover { background: var(--surface); color: var(--text-primary); border-color: var(--border-focus); text-decoration: none; }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 5px 7px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+
+        .btn-icon:hover { background: var(--danger-light); color: var(--danger); }
+        .btn-icon.restore:hover { background: var(--success-light); color: var(--success); }
+        .btn-icon.complete:hover { background: var(--success-light); color: var(--success); }
+        .btn-icon.undo:hover { background: var(--accent-light); color: var(--accent); }
+
+        /* ── Task list ── */
+        .task-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .task-list { list-style: none; }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.1s;
+            background: var(--bg);
+        }
+
+        .task-item:last-child { border-bottom: none; }
+        .task-item:hover { background: var(--surface); }
+
+        .task-circle {
+            width: 18px; height: 18px;
+            border: 2px solid var(--border-focus);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .task-circle.done {
+            background: var(--success);
+            border-color: var(--success);
+            position: relative;
+        }
+
+        .task-circle.done::after {
+            content: '';
+            position: absolute;
+            left: 3px; top: 1px;
+            width: 5px; height: 9px;
+            border: 2px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+
+        .task-title-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .task-title-text.done {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .task-title-text.trashed { color: var(--text-muted); }
+
+        .task-date {
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .task-item:hover .task-actions { opacity: 1; }
+
+        .task-empty {
+            padding: 52px 24px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .task-empty .empty-icon { font-size: 28px; margin-bottom: 10px; }
+        .task-empty p { font-size: 13px; }
+
+        /* ── Stats chips ── */
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-chip {
+            padding: 4px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .stat-chip b { color: var(--text-primary); }
+
+        /* ── Forms ── */
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--bg);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79,126,248,0.12);
+        }
+
+        .form-group input[type="file"] {
+            padding: 7px 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; }
+
+        .form-error-box {
+            background: var(--danger-light);
+            border: 1px solid #f5c6c6;
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--danger);
+            margin-bottom: 18px;
+        }
+
+        /* ── Auth ── */
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: var(--surface);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 380px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+            padding: 36px 32px;
+        }
+
+        .auth-logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            margin-bottom: 4px;
+        }
+
+        .auth-logo span { color: var(--accent); }
+
+        .auth-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        .auth-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Profile ── */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .profile-aside {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .profile-aside img {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border);
+            display: block;
+            margin: 0 auto 12px;
+        }
+
+        .profile-aside .p-initials {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 26px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+        }
+
+        .profile-aside .p-name { font-weight: 600; font-size: 14px; }
+        .profile-aside .p-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+        .profile-aside .p-since { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+        .profile-form-box {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .profile-form-box h2 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* ── Mobile bottom nav ── */
+        .bottom-nav {
+            display: none;
+        }
+
+        /* ── Responsive: tablet ── */
+        @media (max-width: 768px) {
+            .topnav-inner { padding: 0 16px; gap: 12px; }
+            .page { padding: 24px 16px 48px; }
+            .profile-layout { grid-template-columns: 1fr; }
+            .user-name { display: none; }
+            .page-header h1 { font-size: 19px; }
+        }
+
+        /* ── Responsive: mobile ── */
+        @media (max-width: 480px) {
+            /* Hide desktop nav links — replaced by bottom nav */
+            .topnav nav { display: none; }
+            .topnav-inner { height: 48px; padding: 0 14px; gap: 8px; }
+            .topnav .logo { font-size: 15px; }
+            .btn-logout { font-size: 11px; padding: 3px 8px; }
+
+            /* Page */
+            .page { padding: 16px 12px 90px; }
+            .page-header { margin-bottom: 18px; }
+            .page-header h1 { font-size: 18px; }
+            .page-header p { font-size: 12px; }
+
+            /* Add task bar stacks on very small screens */
+            .add-task-bar { gap: 6px; }
+            .add-task-bar input[type="text"] { font-size: 15px; padding: 10px 12px; }
+            .add-task-bar .btn { padding: 10px 14px; font-size: 13px; white-space: nowrap; }
+
+            /* Task items — bigger tap targets */
+            .task-item { padding: 13px 12px; gap: 10px; }
+            .task-title-text { font-size: 14px; }
+            .task-date { font-size: 11px; }
+
+            /* Always show action buttons on mobile (no hover) */
+            .task-actions { opacity: 1; }
+            .btn-icon { padding: 6px 9px; font-size: 14px; }
+
+            /* Task circle larger for touch */
+            .task-circle { width: 20px; height: 20px; }
+            .task-circle.done::after {
+                left: 4px; top: 1px;
+                width: 6px; height: 10px;
+            }
+
+            /* Stats */
+            .stats-row { margin-bottom: 14px; }
+
+            /* Auth card — edge to edge feel */
+            .auth-page { padding: 16px; align-items: flex-start; padding-top: 48px; }
+            .auth-card { padding: 28px 20px; border-radius: 8px; }
+            .auth-logo { font-size: 18px; }
+
+            /* Profile stacks */
+            .profile-layout { grid-template-columns: 1fr; gap: 16px; }
+            .profile-aside {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px;
+                text-align: left;
+            }
+            .profile-aside img,
+            .profile-aside .p-initials {
+                margin: 0;
+                flex-shrink: 0;
+                width: 60px; height: 60px;
+                font-size: 20px;
+            }
+            .profile-form-box { padding: 20px 16px; }
+
+            /* Flash message */
+            .flash { font-size: 12px; padding: 9px 12px; }
+
+            /* Bottom nav */
+            .bottom-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                background: var(--bg);
+                border-top: 1px solid var(--border);
+                z-index: 200;
+                height: 58px;
+            }
+
+            .bottom-nav a {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                font-size: 10px;
+                color: var(--text-muted);
+                text-decoration: none;
+                padding: 8px 4px;
+                transition: color 0.15s, background 0.15s;
+            }
+
+            .bottom-nav a .bnav-icon {
+                font-size: 18px;
+                line-height: 1;
+            }
+
+            .bottom-nav a.active {
+                color: var(--accent);
+            }
+
+            .bottom-nav a:hover {
+                color: var(--text-primary);
+                background: var(--surface);
+                text-decoration: none;
+            }
+        }
+
+        /* ── Very small screens ── */
+        @media (max-width: 360px) {
+            .topnav-inner { padding: 0 10px; }
+            .page { padding: 14px 10px 90px; }
+            .task-item { padding: 12px 10px; }
+            .auth-card { padding: 24px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<nav class="topnav">
+    <div class="topnav-inner">
+        <a class="logo" href="{% url 'task_list' %}">to<span>do</span></a>
+        <nav>
+            <a href="{% url 'task_list' %}" {% if request.resolver_match.url_name == 'task_list' %}class="active"{% endif %}>Active</a>
+            <a href="{% url 'completed_tasks' %}" {% if request.resolver_match.url_name == 'completed_tasks' %}class="active"{% endif %}>Completed</a>
+            <a href="{% url 'deleted_tasks' %}" {% if request.resolver_match.url_name == 'deleted_tasks' %}class="active"{% endif %}>Trash</a>
+        </nav>
+        <div class="nav-right">
+            <a href="{% url 'profile' %}" style="text-decoration:none;">
+                {% if user.profile_picture %}
+                    <img class="avatar" src="{{ user.profile_picture.url }}" alt="">
+                {% else %}
+                    <div class="avatar-placeholder">{{ user.get_display_name|slice:":1"|upper }}</div>
+                {% endif %}
+            </a>
+            <span class="user-name">{{ user.get_display_name }}</span>
+            <a class="btn-logout" href="{% url 'logout' %}">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile bottom navigation -->
+<div class="bottom-nav">
+    <a href="{% url 'task_list' %}" {% if request.resolver_match.url_name == 'task_list' %}class="active"{% endif %}>
+        <span class="bnav-icon">○</span>
+        Active
+    </a>
+    <a href="{% url 'completed_tasks' %}" {% if request.resolver_match.url_name == 'completed_tasks' %}class="active"{% endif %}>
+        <span class="bnav-icon">✓</span>
+        Done
+    </a>
+    <a href="{% url 'deleted_tasks' %}" {% if request.resolver_match.url_name == 'deleted_tasks' %}class="active"{% endif %}>
+        <span class="bnav-icon">🗑</span>
+        Trash
+    </a>
+    <a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active"{% endif %}>
+        <span class="bnav-icon">⊙</span>
+        Profile
+    </a>
+</div>
+{% endif %}
+
+<main>
+    {% if messages %}
+    <div style="max-width:860px;margin:16px auto 0;padding:0 24px;">
+        {% for message in messages %}
+        <div class="flash">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Trash{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page-header">
+        <h1>Trash</h1>
+        <p>Deleted tasks. Restore or permanently erase them.</p>
+    </div>
+
+    {% if tasks %}
+    <div class="stats-row">
+        <div class="stat-chip"><b>{{ tasks|length }}</b>&nbsp;in trash</div>
+    </div>
+    <div class="task-card">
+        <ul class="task-list">
+            {% for task in tasks %}
+            <li class="task-item">
+                <div class="task-circle"></div>
+                <span class="task-title-text trashed">{{ task.title }}</span>
+                <span class="task-date">{{ task.created_at|date:"d M" }}</span>
+                <div class="task-actions">
+                    <form method="post" action="{% url 'restore_task' task.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-icon restore" title="Restore">↩</button>
+                    </form>
+                    <form method="post" action="{% url 'permanent_delete' task.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-icon" title="Delete permanently"
+                            onclick="return confirm('Permanently delete this task?')">✕</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="task-card">
+        <div class="task-empty">
+            <div class="empty-icon">🗑</div>
+            <p>Trash is empty.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

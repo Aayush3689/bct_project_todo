@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Active Tasks{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page-header">
+        <h1>Active Tasks</h1>
+        <p>Things you still need to get done.</p>
+    </div>
+
+    <form method="post" class="add-task-bar">
+        {% csrf_token %}
+        {{ form.title }}
+        <button type="submit" class="btn btn-primary">Add task</button>
+    </form>
+    {% if form.title.errors %}
+    <div class="form-error" style="margin-bottom:12px;">
+        {% for e in form.title.errors %}{{ e }}{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if tasks %}
+    <div class="stats-row">
+        <div class="stat-chip"><b>{{ tasks|length }}</b>&nbsp;remaining</div>
+    </div>
+    <div class="task-card">
+        <ul class="task-list">
+            {% for task in tasks %}
+            <li class="task-item">
+                <div class="task-circle"></div>
+                <span class="task-title-text">{{ task.title }}</span>
+                <span class="task-date">{{ task.created_at|date:"d M" }}</span>
+                <div class="task-actions">
+                    <form method="post" action="{% url 'toggle_complete' task.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="task_list">
+                        <button type="submit" class="btn-icon complete" title="Mark complete">✓</button>
+                    </form>
+                    <form method="post" action="{% url 'soft_delete' task.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="task_list">
+                        <button type="submit" class="btn-icon" title="Delete">✕</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="task-card">
+        <div class="task-empty">
+            <div class="empty-icon">✓</div>
+            <p>All clear! Add a task above to get started.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
